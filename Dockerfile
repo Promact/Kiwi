@@ -59,9 +59,4 @@ RUN /Kiwi/manage.py compilemessages
 # collect static files
 RUN /Kiwi/manage.py collectstatic --noinput
 
-# from now on execute as non-root
-RUN chown -R 1001 /Kiwi/ /venv/ \
-    /etc/pki/tls/certs/localhost.crt /etc/pki/tls/private/localhost.key
-USER 1001
-
 CMD exec gunicorn tcms.wsgi:application --bind 0.0.0.0:8080 --workers 4

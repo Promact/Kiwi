@@ -14,6 +14,7 @@ RUN apt-get update && \
     apt install -y software-properties-common dirmngr && \
     apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0xF1656F24C74CD1D8 && \
     add-apt-repository 'deb [arch=amd64,i386,ppc64el] http://suro.ubaya.ac.id/mariadb/repo/10.3/debian stretch main' && \
+    add-apt-repository ppa:jonathonf/python-3.6 && \
     apt-get update && \
     apt-get install -y libpython3.6-dev libmariadb-dev libxml2-dev libxslt1-dev libgv-python graphviz
 

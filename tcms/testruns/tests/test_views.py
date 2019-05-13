@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.contrib.auth.models import Permission
 from django.utils.translation import ugettext_lazy as _
 
-from tcms.testruns.models import TestCaseRunStatus
+from tcms.testruns.models import TestExecutionStatus
 from tcms.testruns.models import TestRun
 from tcms.utils.permissions import initiate_user_with_default_setups
 
@@ -55,7 +55,7 @@ class TestGetRun(BaseCaseRun):
         self.assertContains(response, 'js-remove-tag')
 
         for i, case_run in enumerate(
-                (self.case_run_1, self.case_run_2, self.case_run_3), 1):
+                (self.execution_1, self.execution_2, self.execution_3), 1):
             self.assertContains(
                 response,
                 '<a href="#caserun_{0}">#{0}</a>'.format(case_run.pk),
@@ -164,7 +164,7 @@ class TestCreateNewRun(BasePlanCase):
             self.assertEqual(case, case_run.case)
             self.assertEqual(None, case_run.tested_by)
             self.assertEqual(self.tester, case_run.assignee)
-            self.assertEqual(TestCaseRunStatus.objects.get(name='IDLE'),
+            self.assertEqual(TestExecutionStatus.objects.get(name='IDLE'),
                              case_run.status)
             self.assertEqual(case.history.latest().history_id, case_run.case_text_version)
             self.assertEqual(new_run.build, case_run.build)
@@ -182,7 +182,7 @@ class CloneRunBaseTest(BaseCaseRun):
             'type="text" value="%s%s" required>' % (_('Clone of '), self.test_run.summary),
             html=True)
 
-        for case_run in (self.case_run_1, self.case_run_2):
+        for case_run in (self.execution_1, self.execution_2):
             case_url = reverse('testcases-get', args=[case_run.case.pk])
 
             self.assertContains(
@@ -217,7 +217,7 @@ class TestStartCloneRunFromRunPage(CloneRunBaseTest):
             password='password')
         url = reverse('testruns-clone', args=[self.test_run.pk])
 
-        response = self.client.post(url, {'case_run': [self.case_run_1.pk, self.case_run_2.pk]})
+        response = self.client.post(url, {'case_run': [self.execution_1.pk, self.execution_2.pk]})
 
         self.assert_one_run_clone_page(response)
 
@@ -242,8 +242,8 @@ class TestStartCloneRunFromRunPage(CloneRunBaseTest):
             'manager': self.test_run.manager.email,
             'default_tester': self.test_run.default_tester.email,
             'notes': '',
-            'case': [self.case_run_1.case.pk, self.case_run_2.case.pk],
-            'case_run_id': [self.case_run_1.pk, self.case_run_2.pk],
+            'case': [self.execution_1.case.pk, self.execution_2.case.pk],
+            'case_run_id': [self.execution_1.pk, self.execution_2.pk],
         }
 
         url = reverse('testruns-new')
@@ -259,9 +259,9 @@ class TestStartCloneRunFromRunPage(CloneRunBaseTest):
 
     def assert_cloned_run(self, cloned_run):
         # Assert clone settings result
-        for origin_case_run, cloned_case_run in zip((self.case_run_1, self.case_run_2),
+        for origin_case_run, cloned_case_run in zip((self.execution_1, self.execution_2),
                                                     cloned_run.case_run.order_by('pk')):
-            self.assertEqual(TestCaseRunStatus.objects.get(name='IDLE'),
+            self.assertEqual(TestExecutionStatus.objects.get(name='IDLE'),
                              cloned_case_run.status)
             self.assertEqual(origin_case_run.assignee, cloned_case_run.assignee)
 
@@ -369,7 +369,7 @@ class TestRemoveCaseRuns(BaseCaseRun):
     def setUpTestData(cls):
         super(TestRemoveCaseRuns, cls).setUpTestData()
 
-        user_should_have_perm(cls.tester, 'testruns.delete_testcaserun')
+        user_should_have_perm(cls.tester, 'testruns.delete_testexecution')
 
         cls.remove_case_run_url = reverse('testruns-remove_case_run',
                                           args=[cls.test_run.pk])
@@ -385,9 +385,9 @@ class TestRemoveCaseRuns(BaseCaseRun):
 
         self.client.post(self.remove_case_run_url,
                          {
-                             'case_run': [self.case_run_1.pk,
+                             'case_run': [self.execution_1.pk,
                                           'a1000',
-                                          self.case_run_2.pk],
+                                          self.execution_2.pk],
                          })
 
         self.assertEqual(expected_rest_case_runs_count,
@@ -397,14 +397,14 @@ class TestRemoveCaseRuns(BaseCaseRun):
         expected_rest_case_runs_count = self.test_run.case_run.count() - 1
 
         self.client.post(self.remove_case_run_url,
-                         {'case_run': [self.case_run_1.pk]})
+                         {'case_run': [self.execution_1.pk]})
 
         self.assertEqual(expected_rest_case_runs_count,
                          self.test_run.case_run.count())
 
     def test_redirect_to_run_if_still_case_runs_exist_after_removal(self):
         response = self.client.post(self.remove_case_run_url,
-                                    {'case_run': [self.case_run_1.pk]})
+                                    {'case_run': [self.execution_1.pk]})
 
         self.assertRedirects(response,
                              reverse('testruns-get', args=[self.test_run.pk]))
@@ -434,25 +434,88 @@ class TestUpdateCaseRunText(BaseCaseRun):
     def setUpTestData(cls):
         super().setUpTestData()
 
+        cls.testruns_url = reverse('testruns-get', args=[cls.test_run.pk])
         cls.update_url = reverse('testruns-update_case_run_text',
                                  args=[cls.test_run.pk])
 
         # To increase case text version
-        cls.case_run_1.case.text = "Scenario Version 1"
-        cls.case_run_1.case.save()
+        cls.execution_1.case.text = "Scenario Version 1"
+        cls.execution_1.case.save()
 
-        cls.case_run_1.case.text = "Scenario Version 2"
-        cls.case_run_1.case.save()
+        cls.execution_1.case.text = "Scenario Version 2"
+        cls.execution_1.case.save()
 
-    def test_update_selected_case_runs(self):
-        self.assertNotEqual(self.case_run_1.case.history.latest().history_id,
-                            self.case_run_1.case_text_version)
+    def test_get_update_caserun_text_with_permissions(self):
+        user_should_have_perm(self.tester, 'testruns.change_testexecution')
+        response = self.client.get(self.testruns_url)
+        self.assertContains(response, 'id="update_case_run_text"')
+
+    def test_update_selected_case_runs_with_permissions(self):
+        user_should_have_perm(self.tester, 'testruns.change_testexecution')
+
+        self.assertNotEqual(self.execution_1.case.history.latest().history_id,
+                            self.execution_1.case_text_version)
         response = self.client.post(self.update_url,
-                                    {'case_run': [self.case_run_1.pk]},
+                                    {'case_run': [self.execution_1.pk]},
                                     follow=True)
 
         self.assertContains(response, _('%d CaseRun(s) updated:') % 1)
-        self.assertEqual(self.case_run_1.case.text, "Scenario Version 2")
+
+        self.execution_1.refresh_from_db()
+
+        self.assertEqual(
+            self.execution_1.case.get_text_with_version(
+                self.execution_1.case_text_version
+            ),
+            "Scenario Version 2"
+        )
+        self.assertEqual(
+            self.execution_1.case.history.latest().history_id,
+            self.execution_1.case_text_version
+        )
+
+    def test_get_update_caserun_text_without_permissions(self):
+        remove_perm_from_user(self.tester, 'testruns.change_testexecution')
+        response = self.client.get(self.testruns_url)
+        self.assertNotContains(response, 'id="update_case_run_text"')
+
+    def test_update_selected_case_runs_without_permissions(self):
+        self.execution_1.case.text = "Scenario Version 3"
+        self.execution_1.case.save()
+
+        remove_perm_from_user(self.tester, 'testruns.change_testexecution')
+
+        self.client.login(  # nosec:B106:hardcoded_password_funcarg
+            username=self.tester.username,
+            password='password')
+
+        self.assertNotEqual(
+            self.execution_1.case.history.latest().history_id,
+            self.execution_1.case_text_version
+        )
+
+        response = self.client.post(self.update_url,
+                                    {'case_run': [self.execution_1.pk]},
+                                    follow=True)
+
+        self.assertRedirects(
+            response,
+            reverse('tcms-login') + '?next=' + self.update_url
+        )
+
+        self.execution_1.refresh_from_db()
+
+        self.assertNotEqual(
+            self.execution_1.case.get_text_with_version(
+                self.execution_1.case_text_version
+            ),
+            "Scenario Version 3"
+        )
+
+        self.assertNotEqual(
+            self.execution_1.case.history.latest().history_id,
+            self.execution_1.case_text_version
+        )
 
 
 class TestEditRun(BaseCaseRun):
@@ -509,7 +572,7 @@ class TestAddCasesToRun(BaseCaseRun):
             case_status=cls.case_status_proposed,
             plan=[cls.plan])
 
-        user_should_have_perm(cls.tester, 'testruns.add_testcaserun')
+        user_should_have_perm(cls.tester, 'testruns.add_testexecution')
 
     def test_show_add_cases_to_run(self):
         url = reverse('add-cases-to-run', args=[self.test_run.pk])

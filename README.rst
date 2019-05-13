@@ -9,6 +9,10 @@ Kiwi TCMS - Open Source Test Case Management System
     :target: http://kiwitcms.readthedocs.io/en/latest/?badge=latest
     :alt: Documentation
 
+.. image:: https://d322cqt584bo4o.cloudfront.net/kiwitcms/localized.svg
+   :target: https://crowdin.com/project/kiwitcms
+   :alt: Translate
+
 .. image:: https://pyup.io/repos/github/kiwitcms/Kiwi/shield.svg
     :target: https://pyup.io/repos/github/kiwitcms/Kiwi/
     :alt: Python updates
@@ -21,8 +25,8 @@ Kiwi TCMS - Open Source Test Case Management System
     :target: https://scan.coverity.com/projects/kiwitcms-kiwi
     :alt: Coverity scan
 
-.. image:: https://snyk.io/test/github/kiwitcms/Kiwi/badge.svg
-    :target: https://snyk.io/test/github/kiwitcms/Kiwi
+.. image:: https://snyk.io/test/github/kiwitcms/Kiwi/badge.svg?targetFile=tcms/package.json
+    :target: https://snyk.io/test/github/kiwitcms/Kiwi/?targetFile=tcms/package.json
     :alt: Snyk vulnerability scan
 
 .. image:: https://coveralls.io/repos/github/kiwitcms/Kiwi/badge.svg?branch=master

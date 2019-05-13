@@ -14,12 +14,12 @@ from tcms.core.models import TCMSActionModel
 from tcms.core.history import KiwiHistoricalRecords
 from tcms.core.contrib.linkreference.models import LinkReference
 from tcms.testcases.models import Bug
-from tcms.xmlrpc.serializer import TestCaseRunXMLRPCSerializer
+from tcms.xmlrpc.serializer import TestExecutionXMLRPCSerializer
 from tcms.xmlrpc.serializer import TestRunXMLRPCSerializer
 from tcms.xmlrpc.utils import distinct_filter
 
 
-TestCaseRunStatusSubtotal = namedtuple('TestCaseRunStatusSubtotal', [
+TestExecutionStatusSubtotal = namedtuple('TestCaseRunStatusSubtotal', [
     'StatusSubtotal',
     'CaseRunsTotalCount',
     'CompletedPercentage',
@@ -106,7 +106,7 @@ class TestRun(TCMSActionModel):
             or (case.default_tester_id and case.default_tester) \
             or (self.default_tester_id and self.default_tester)
 
-        _status = TestCaseRunStatus.objects.get(id=status) \
+        _status = TestExecutionStatus.objects.get(id=status) \
             if isinstance(status, int) else status
 
         return self.case_run.create(case=case,
@@ -156,8 +156,8 @@ class TestRun(TCMSActionModel):
         return percent
 
     def _get_completed_case_run_percentage(self):
-        ids = TestCaseRunStatus.objects.filter(
-            name__in=TestCaseRunStatus.complete_status_names).values_list('pk', flat=True)
+        ids = TestExecutionStatus.objects.filter(
+            name__in=TestExecutionStatus.complete_status_names).values_list('pk', flat=True)
 
         completed_caserun = self.case_run.filter(
             status__in=ids)
@@ -178,21 +178,21 @@ class TestRun(TCMSActionModel):
             self.stop_date = None
 
     @override('en')
-    def stats_caseruns_status(self, statuses=None):
+    def stats_executions_status(self, statuses=None):
         """
-            Get statistics based on case runs' status
+            Get statistics based on executions' status
 
             :param statuses: iterable object containing TestCaseRunStatus
                              objects representing PASS, FAIL, WAIVED, etc.
             :type statuses: iterable
             :return: the statistics including the number of each status mapping,
-                     total number of case runs, complete percent, and failure percent.
+                     total number of executions, complete percent, and failure percent.
             :rtype: namedtuple
         """
         if statuses is None:
-            statuses = TestCaseRunStatus.objects.only('pk', 'name').order_by('pk')
+            statuses = TestExecutionStatus.objects.only('pk', 'name').order_by('pk')
 
-        rows = TestCaseRun.objects.filter(
+        rows = TestExecution.objects.filter(
             run=self.pk
         ).values(
             'status'
@@ -214,9 +214,9 @@ class TestRun(TCMSActionModel):
 
             caseruns_total_count += status_caseruns_count
 
-            if status_name in TestCaseRunStatus.complete_status_names:
+            if status_name in TestExecutionStatus.complete_status_names:
                 complete_count += status_caseruns_count
-            if status_name in TestCaseRunStatus.failure_status_names:
+            if status_name in TestExecutionStatus.failure_status_names:
                 failure_count += status_caseruns_count
 
         # Final calculation
@@ -227,14 +227,14 @@ class TestRun(TCMSActionModel):
         if complete_count:
             failure_percent = failure_count * 100.0 / caseruns_total_count
 
-        return TestCaseRunStatusSubtotal(caserun_statuses_subtotal,
-                                         caseruns_total_count,
-                                         complete_percent,
-                                         failure_percent,
-                                         complete_percent - failure_percent)
+        return TestExecutionStatusSubtotal(caserun_statuses_subtotal,
+                                           caseruns_total_count,
+                                           complete_percent,
+                                           failure_percent,
+                                           complete_percent - failure_percent)
 
 
-class TestCaseRunStatus(TCMSActionModel):
+class TestExecutionStatus(TCMSActionModel):
     FAILED = 'FAILED'
     BLOCKED = 'BLOCKED'
     PASSED = 'PASSED'
@@ -277,10 +277,10 @@ class TestCaseRunStatus(TCMSActionModel):
 
 
 # register model for DB translations
-vinaigrette.register(TestCaseRunStatus, ['name'])
+vinaigrette.register(TestExecutionStatus, ['name'])
 
 
-class TestCaseRun(TCMSActionModel):
+class TestExecution(TCMSActionModel):
     history = KiwiHistoricalRecords()
 
     case_run_id = models.AutoField(primary_key=True)
@@ -297,7 +297,7 @@ class TestCaseRun(TCMSActionModel):
     run = models.ForeignKey(TestRun, related_name='case_run', on_delete=models.CASCADE)
     case = models.ForeignKey('testcases.TestCase', related_name='case_run',
                              on_delete=models.CASCADE)
-    status = models.ForeignKey(TestCaseRunStatus, on_delete=models.CASCADE)
+    status = models.ForeignKey(TestExecutionStatus, on_delete=models.CASCADE)
     build = models.ForeignKey('management.Build', on_delete=models.CASCADE)
 
     class Meta:
@@ -316,8 +316,8 @@ class TestCaseRun(TCMSActionModel):
     def to_xmlrpc(cls, query: dict = None):
         if query is None:
             query = {}
-        query_set = distinct_filter(TestCaseRun, query).order_by('pk')
-        serializer = TestCaseRunXMLRPCSerializer(model_class=cls, queryset=query_set)
+        query_set = distinct_filter(TestExecution, query).order_by('pk')
+        serializer = TestExecutionXMLRPCSerializer(model_class=cls, queryset=query_set)
         return serializer.serialize_queryset()
 
     def add_bug(self, bug_id, bug_system_id,

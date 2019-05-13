@@ -24,7 +24,7 @@ installation. This is used to construct links to test plans, test cases, etc.
 The default value is ``127.0.0.1:8000`` which is suitable if you are running
 in devel mode. To update the setting go to
 ``https://<your_domain_or_ip>/admin/sites/site/1/``!
-Update **Domain name** to the fully qualified domain name or IR address,
+Update **Domain name** to the fully qualified domain name or IP address,
 including port if necessary and click the Save button!
 
 
@@ -48,7 +48,7 @@ and integration type.
     these sections carefully before configuring integration with external bug tracking
     systems!
 
-Users can add or remove bugs to TestCase Runs if they
+Users can add or remove bugs to Test Executions if they
 have the `testcases.add_testcasebug` and/or `testcases.delete_testcasebug`
 permissions!
 
@@ -247,7 +247,7 @@ Explanation of editable entities
 --------------------------------
 
 Some DB entities are editable via the Admin interface. Their meaning is
-exmplained below.
+explained below.
 
 
 Products

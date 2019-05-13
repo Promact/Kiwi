@@ -30,6 +30,9 @@ RUN virtualenv /venv
 ENV VIRTUAL_ENV /venv
 ENV PATH /venv/bin:$PATH
 
+# because we get some errors from other packages which need newer versions
+RUN pip install --upgrade pip setuptools
+
 # replace standard mod_wsgi with one compiled for Python 3
 RUN pip install --no-cache-dir --upgrade gunicorn
 
@@ -40,11 +43,7 @@ RUN pip install --no-cache-dir /Kiwi/kiwitcms-*.tar.gz
 # install DB requirements b/c the rest should already be installed
 COPY ./requirements/ /Kiwi/requirements/
 RUN pip install --no-cache-dir -r /Kiwi/requirements/mariadb.txt
-
-# install npm dependencies
-COPY package.json /Kiwi/
-RUN cd /Kiwi/ && npm install && \
-    find ./node_modules -type d -empty -delete
+RUN pip install --no-cache-dir -r /Kiwi/requirements/postgres.txt
 
 COPY ./manage.py /Kiwi/
 COPY ./etc/kiwitcms/ssl/ /Kiwi/ssl/

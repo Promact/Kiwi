@@ -23,8 +23,8 @@ from tcms.testcases.models import TestCase, TestCaseStatus, \
     TestCasePlan
 from tcms.management.models import Priority, Tag
 from tcms.testplans.models import TestPlan
-from tcms.testruns.models import TestCaseRun
-from tcms.testruns.models import TestCaseRunStatus
+from tcms.testruns.models import TestExecution
+from tcms.testruns.models import TestExecutionStatus
 from tcms.testcases.forms import NewCaseForm, \
     SearchCaseForm, CaseNotifyForm, CloneCaseForm
 from tcms.testplans.forms import SearchPlanForm
@@ -491,8 +491,8 @@ class SimpleTestCaseView(TemplateView):
         return data
 
 
-class TestCaseCaseRunDetailPanelView(TemplateView):
-    """Display case run detail in run page"""
+class TestCaseExecutionDetailPanelView(TemplateView):
+    """Display execution detail in run page"""
 
     template_name = 'case/get_details_case_run.html'
     caserun_id = None
@@ -511,27 +511,26 @@ class TestCaseCaseRunDetailPanelView(TemplateView):
         data = super().get_context_data(**kwargs)
 
         case = TestCase.objects.get(pk=kwargs['case_id'])
-        case_run = TestCaseRun.objects.get(pk=self.caserun_id)
+        execution = TestExecution.objects.get(pk=self.caserun_id)
 
         # Data of TestCase
         test_case_text = case.get_text_with_version(self.case_text_version)
 
-        # Data of TestCaseRun
-        caserun_comments = get_comments(case_run)
+        # Data of TestExecution
+        execution_comments = get_comments(execution)
 
-        caserun_status = TestCaseRunStatus.objects.values('pk', 'name')
-        caserun_status = caserun_status.order_by('pk')
-        bugs = group_case_bugs(case_run.case.get_bugs().order_by('bug_id'))
+        execution_status = TestExecutionStatus.objects.values('pk', 'name').order_by('pk')
+        bugs = group_case_bugs(execution.case.get_bugs().order_by('bug_id'))
 
         data.update({
             'test_case': case,
             'test_case_text': test_case_text,
 
-            'test_case_run': case_run,
-            'comments_count': len(caserun_comments),
-            'caserun_comments': caserun_comments,
-            'caserun_logs': case_run.history.all(),
-            'test_status': caserun_status,
+            'execution': execution,
+            'comments_count': len(execution_comments),
+            'execution_comments': execution_comments,
+            'execution_logs': execution.history.all(),
+            'execution_status': execution_status,
             'grouped_case_bugs': bugs,
         })
 
@@ -549,7 +548,7 @@ def get(request, case_id):
     except ObjectDoesNotExist:
         raise Http404
 
-    # Get the test case runs
+    # Get the test executions
     tcrs = test_case.case_run.select_related(
         'run', 'tested_by',
         'assignee', 'case',

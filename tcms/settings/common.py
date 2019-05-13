@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import os.path
+import pkg_resources
+from importlib import import_module
+
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.messages import constants as messages
@@ -16,23 +19,27 @@ DEBUG = True
 
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = '^8y!)$0t7yq2+65%&_#@i^_o)eb3^q--y_$e7a_=t$%$1i)zuv'
+SECRET_KEY = '^8y!)$0t7yq2+65%&_#@i^_o)eb3^q--y_$e7a_=t$%$1i)zuv'  # nosec:B105
 
 
 # Database settings
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': os.environ.get('KIWI_DB_ENGINE', 'django.db.backends.mysql'),
         'NAME': os.environ.get('KIWI_DB_NAME', 'kiwi'),
         'USER': os.environ.get('KIWI_DB_USER', 'kiwi'),
         'PASSWORD': os.environ.get('KIWI_DB_PASSWORD', 'kiwi'),
         'HOST': os.environ.get('KIWI_DB_HOST', ''),
         'PORT': os.environ.get('KIWI_DB_PORT', ''),
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
+        'OPTIONS': {},
     },
 }
+
+# handle MariaDB only options
+if DATABASES['default']['ENGINE'].find('mysql') > -1:
+    DATABASES['default']['OPTIONS'].update({
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        })
 
 
 # Administrators error report email settings
@@ -96,16 +103,27 @@ MENU_ITEMS = [
         (_('Search Test Cases'), reverse_lazy('testcases-search')),
     ]),
     (_('TELEMETRY'), [
-        ('Coming soon',
+        (_('Testing'), [
+            (_('Breakdown'), reverse_lazy('testing-breakdown'))
+        ]),
+        ('More coming soon',
          'http://kiwitcms.org/blog/kiwi-tcms-team/2019/03/03/legacy-reports-become-telemetry/'),
-        ('-', '-'),
     ]),
+]
+
+# last element is always TELEMETRY
+for plugin in pkg_resources.iter_entry_points('kiwitcms.telemetry.plugins'):
+    plugin_menu = import_module('%s.menu' % plugin.module_name)
+    MENU_ITEMS[-1][1].extend(plugin_menu.MENU_ITEMS)
+
+# append the ADMIN menu at the end
+MENU_ITEMS.append(
     (_('ADMIN'), [
         (_('Users and groups'), '/admin/auth/'),
         ('-', '-'),
         (_('Everything else'), '/admin/'),
     ]),
-]
+)
 
 # redefine the help menu in the navigation bar
 HELP_MENU_ITEMS = [
@@ -181,8 +199,8 @@ USE_I18N = True
 USE_L10N = True
 
 # Language code for this installation. All choices can be found here:
-# http://www.i18nguy.com/unicode/language-identifiers.html
-LANGUAGE_CODE = 'en'
+# See https://code.djangoproject.com/ticket/29713
+LANGUAGE_CODE = 'en-us'
 
 LOCALE_PATHS = [
     os.path.join(TCMS_ROOT_PATH, 'locale'),
@@ -213,13 +231,8 @@ STATICFILES_DIRS = [
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
     os.path.join(TCMS_ROOT_PATH, 'static').replace('\\', '/'),
+    os.path.join(TCMS_ROOT_PATH, 'node_modules').replace('\\', '/'),
 ]
-
-# this is the path used inside the Docker image
-if os.path.exists('/Kiwi/node_modules'):
-    STATICFILES_DIRS.append('/Kiwi/node_modules')
-else:
-    STATICFILES_DIRS.append(os.path.join(TCMS_ROOT_PATH, '..', 'node_modules').replace('\\', '/'))
 
 # List of finder classes that know how to find static files in
 # various locations.
@@ -283,8 +296,13 @@ INSTALLED_APPS = [
     'tcms.testcases.apps.AppConfig',
     'tcms.testplans.apps.AppConfig',
     'tcms.testruns.apps.AppConfig',
+    'tcms.telemetry',
     'tcms.xmlrpc',
 ]
+
+for plugin in pkg_resources.iter_entry_points('kiwitcms.telemetry.plugins'):
+    INSTALLED_APPS.append(plugin.module_name)
+
 
 SERIALIZATION_MODULES = {
     'json': 'tcms.core.serializer',
@@ -299,6 +317,7 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 COMMENTS_APP = 'tcms.core.contrib.comments'
 
 MODERNRPC_METHODS_MODULES = [
+    'tcms.xmlrpc.api.attachment',
     'tcms.xmlrpc.api.auth',
     'tcms.xmlrpc.api.bug',
     'tcms.xmlrpc.api.build',
@@ -311,13 +330,14 @@ MODERNRPC_METHODS_MODULES = [
     'tcms.xmlrpc.api.product',
     'tcms.xmlrpc.api.tag',
     'tcms.xmlrpc.api.testcase',
-    'tcms.xmlrpc.api.testcaserun',
-    'tcms.xmlrpc.api.testcaserunstatus',
+    'tcms.xmlrpc.api.testexecution',
+    'tcms.xmlrpc.api.testexecutionstatus',
     'tcms.xmlrpc.api.testcasestatus',
     'tcms.xmlrpc.api.testplan',
     'tcms.xmlrpc.api.testrun',
     'tcms.xmlrpc.api.user',
     'tcms.xmlrpc.api.version',
+    'tcms.telemetry.api'
 ]
 
 # Enable the administrator delete permission

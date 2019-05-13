@@ -62,7 +62,7 @@ class IssueTrackerType:
 
     def add_testcase_to_issue(self, testcases, issue):
         """
-            When adding issues to TestCase Run results there is a
+            When adding issues to Test Execution results there is a
             'Check to add test cases to Issue tracker' checkbox. If
             selected this method is called to link the bug report to the
             test case which was used to discover the bug.
@@ -76,6 +76,10 @@ class IssueTrackerType:
         raise NotImplementedError()
 
     # pylint: disable = invalid-name, no-self-use
+    # todo: we should allow this method to raise and the specific error
+    # message must be returned to the caller instead of generic one.
+    # as it is LinkOnly tracker doesn't have any integrations but the error
+    # message is misleading
     def is_adding_testcase_to_issue_disabled(self):
         """
             When is linking a TC to a Bug report disabled?
@@ -95,7 +99,7 @@ class IssueTrackerType:
             multiple bugs into a table. GitHub on the other hand doesn't
             support this functionality.
 
-            :ids: - list of issues reported against test case runs
+            :ids: - list of issues reported against test executions
 
             :return: - None if not suported or string representing the URL
         """
@@ -289,7 +293,7 @@ class GitHub(IssueTrackerType):
         .. note::
 
             GitHub does not support displaying multiple issues in a table format like
-            Bugzilla and JIRA do. This means that in Test Case Run Report view you will
+            Bugzilla and JIRA do. This means that in Test Execution Report view you will
             see GitHub issues listed one by one and there will not be a link to open all
             of them inside GitHub's interface!
     """
@@ -378,3 +382,15 @@ class Gitlab(IssueTrackerType):
             url += '/'
 
         return url + '/issues/new?' + urlencode(args, True)
+
+
+class LinkOnly(IssueTrackerType):
+    """
+        Allow only linking issues to TestExecution records. Can be used when your
+        issue tracker is not integrated with Kiwi TCMS.
+
+        No additional API integration available!
+    """
+
+    def is_adding_testcase_to_issue_disabled(self):
+        return True

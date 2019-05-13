@@ -8,7 +8,7 @@ from tcms.core.forms.fields import UserField
 from tcms.management.models import Product, Version, Build
 from tcms.testplans.models import TestPlan
 from tcms.testcases.models import TestCase
-from .models import TestRun, TestCaseRunStatus
+from .models import TestRun, TestExecutionStatus
 
 
 User = get_user_model()  # pylint: disable=invalid-name
@@ -125,38 +125,18 @@ class SearchRunForm(forms.Form):
             )
 
 
-# ===========================================================================
-# Case run form
-# ===========================================================================
-
-
 class BaseCaseRunForm(forms.Form):
-    build = forms.ModelChoiceField(
-        label='Build', queryset=Build.objects.all(),
-    )
-    status = forms.ModelChoiceField(
-        label='Case Run Status', queryset=TestCaseRunStatus.objects.all(),
-        required=False,
-    )
-    assignee = UserField(label='Assignee', required=False)
-    case_text_version = forms.IntegerField(
-        label='Case text version', required=False
-    )
-    sortkey = forms.IntegerField(label='Sortkey', required=False)
+    build = forms.ModelChoiceField(queryset=Build.objects.all())
+    status = forms.ModelChoiceField(queryset=TestExecutionStatus.objects.all(), required=False)
+    assignee = UserField(required=False)
+    case_text_version = forms.IntegerField(required=False)
+    sortkey = forms.IntegerField(required=False)
 
 
-# =========== Forms for XML-RPC functions ==============
-
-class XMLRPCNewCaseRunForm(BaseCaseRunForm):
-    assignee = forms.ModelChoiceField(
-        label='Assignee', queryset=User.objects.all(), required=False
-    )
-    run = forms.ModelChoiceField(
-        label='Test Run', queryset=TestRun.objects.all(),
-    )
-    case = forms.ModelChoiceField(
-        label='TestCase', queryset=TestCase.objects.all(),
-    )
+class XMLRPCNewExecutionForm(BaseCaseRunForm):
+    assignee = forms.ModelChoiceField(queryset=User.objects.all(), required=False)
+    run = forms.ModelChoiceField(queryset=TestRun.objects.all())
+    case = forms.ModelChoiceField(queryset=TestCase.objects.all())
 
     def clean_assignee(self):
         data = self.cleaned_data.get('assignee')
@@ -180,15 +160,11 @@ class XMLRPCNewCaseRunForm(BaseCaseRunForm):
     def clean_status(self):
         data = self.cleaned_data.get('status')
         if not data:
-            data = TestCaseRunStatus.objects.get(name='IDLE')
+            data = TestExecutionStatus.objects.get(name='IDLE')
 
         return data
 
 
-class XMLRPCUpdateCaseRunForm(BaseCaseRunForm):
-    assignee = forms.ModelChoiceField(
-        label='Assignee', queryset=User.objects.all(), required=False
-    )
-    build = forms.ModelChoiceField(
-        label='Build', queryset=Build.objects.all(), required=False,
-    )
+class XMLRPCUpdateExecutionForm(BaseCaseRunForm):
+    assignee = forms.ModelChoiceField(queryset=User.objects.all(), required=False)
+    build = forms.ModelChoiceField(queryset=Build.objects.all(), required=False)

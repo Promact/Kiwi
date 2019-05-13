@@ -9,12 +9,12 @@ from django.contrib.contenttypes.models import ContentType
 from django.urls import reverse
 from django_comments.models import Comment
 
-from tcms.testruns.models import TestCaseRun
+from tcms.testruns.models import TestExecution
 from tcms.tests import BaseCaseRun
 from tcms.tests.factories import UserFactory
 from tcms.tests.factories import TestPlanFactory
 from tcms.tests.factories import TestRunFactory
-from tcms.tests.factories import TestCaseRunFactory
+from tcms.tests.factories import TestExecutionFactory
 
 
 class TestNavigation(test.TestCase):
@@ -73,7 +73,7 @@ class TestDashboard(BaseCaseRun):
         self.assertContains(response, test_run.summary)
 
     def test_dashboard_shows_testruns_for_test_case_run_assignee(self):
-        test_case_run = TestCaseRunFactory(assignee=self.tester)
+        test_case_run = TestExecutionFactory(assignee=self.tester)
 
         response = self.client.get(reverse('core-views-index'))
         self.assertContains(response, test_case_run.run.summary)
@@ -93,7 +93,7 @@ class TestCommentCaseRuns(BaseCaseRun):
             password='password')
 
         response = self.client.post(self.many_comments_url,
-                                    {'run': [self.case_run_1.pk, self.case_run_2.pk]})
+                                    {'run': [self.execution_1.pk, self.execution_2.pk]})
         self.assertJSONEqual(
             str(response.content, encoding=settings.DEFAULT_CHARSET),
             {'rc': 1, 'response': 'Comments needed'})
@@ -136,16 +136,16 @@ class TestCommentCaseRuns(BaseCaseRun):
         response = self.client.post(
             self.many_comments_url,
             {'comment': new_comment,
-             'run': ','.join([str(self.case_run_1.pk),
-                              str(self.case_run_2.pk)])})
+             'run': ','.join([str(self.execution_1.pk),
+                              str(self.execution_2.pk)])})
         self.assertJSONEqual(
             str(response.content, encoding=settings.DEFAULT_CHARSET),
             {'rc': 0, 'response': 'ok'})
 
         # Assert comments are added
-        case_run_ct = ContentType.objects.get_for_model(TestCaseRun)
+        case_run_ct = ContentType.objects.get_for_model(TestExecution)
 
-        for case_run_pk in (self.case_run_1.pk, self.case_run_2.pk):
+        for case_run_pk in (self.execution_1.pk, self.execution_2.pk):
             comments = Comment.objects.filter(object_pk=case_run_pk,
                                               content_type=case_run_ct)
             self.assertEqual(new_comment, comments[0].comment)

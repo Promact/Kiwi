@@ -1,6 +1,273 @@
 Change Log
 ==========
 
+Kiwi TCMS 6.8 (03 May 2019)
+---------------------------
+
+**IMPORTANT:** this is a small improvement and bug-fix update.
+Supported upgrade paths::
+
+    5.3   (or older) -> 5.3.1
+    5.3.1 (or newer) -> 6.0.1
+    6.0.1            -> 6.1
+    6.1              -> 6.1.1
+    6.1.1            -> 6.2 (or newer)
+
+After upgrade don't forget to::
+
+    ./manage.py migrate
+
+
+Improvements
+~~~~~~~~~~~~
+
+- Update Django from 2.2 to 2.2.1
+- Update django-simple-history from 2.7.0 to 2.7.2
+- Update django-grappelli from 2.12.2 to 2.12.3
+- Update psycopg2 from 2.8 to 2.8.2
+- Update pygithub from 1.43.6 to 1.43.7
+- Upgrade pip and setuptools inside Docker image
+- Update documentation with newer screenshots and updated Tutotial. Fixes
+  `Issue #837 <https://github.com/kiwitcms/Kiwi/issues/837/>`_ (@Prome88)
+- Document how to enable public read-only views
+- Remove deprecated documentation section about Bugzilla authentication
+- Install PostgreSQL libraries in Docker image which makes it easier to
+  switch the DB backend without rebuilding the entire image
+- Remove npm, libxml2-devel and libxslt-devel from Docker image
+- Database engine configuration now respects the ``KIWI_DB_ENGINE`` environment
+  variable which defaults to ``django.db.backends.mysql``. This will make it
+  easier for admins to change DB engine by updating their ``docker-compose.yml``
+
+
+Bug fixes
+~~~~~~~~~
+
+- Pin bootstrap-switch to version 3.3.4 in ``package.json``. Fixes
+  `Issue #916 <https://github.com/kiwitcms/Kiwi/issues/916/>`_
+
+
+Translations
+~~~~~~~~~~~~
+
+- Updated `French translation <https://crowdin.com/project/kiwitcms/fr#>`_
+- Updated `Slovenian translation <https://crowdin.com/project/kiwitcms/sl#>`_
+- Updated `Russian translation <https://crowdin.com/project/kiwitcms/ru#>`_
+- New language `Czech <https://crowdin.com/project/kiwitcms/cz#>`_
+
+
+Refactoring
+~~~~~~~~~~~
+
+- Don't use ``Site.objects.get_current()`` because it has an internal cache
+  and causes email notifications from tenants to use the wrong URL
+- More changes around renaming of TestCaseRun to TestExecution
+
+
+
+Kiwi TCMS 6.7 (06 April 2019)
+-----------------------------
+
+**IMPORTANT:** this is a small improvement and bug-fix update.
+Supported upgrade paths::
+
+    5.3   (or older) -> 5.3.1
+    5.3.1 (or newer) -> 6.0.1
+    6.0.1            -> 6.1
+    6.1              -> 6.1.1
+    6.1.1            -> 6.2 (or newer)
+
+After upgrade don't forget to::
+
+    ./manage.py migrate
+
+
+Improvements
+~~~~~~~~~~~~
+
+- Update Django from 2.1.7 to 2.2
+- Update markdown from 3.0.1 to 3.1
+- Update psycopg2 from 2.7.7 to 2.8
+- Update pygithub from 1.43.5 to 1.43.6
+- Update bleach-whitelist from 0.0.9 to 0.0.10
+- Update marked(.js) to version 0.6.2
+- Support arbitrary depth for ``MENU_ITEMS`` setting
+- Support auto-discovery of 3rd party Telemetry plugins, see
+  `documentation <https://kiwitcms.readthedocs.io/en/latest/telemetry/index.html>`_
+
+
+Database migrations
+~~~~~~~~~~~~~~~~~~~
+
+- Rename ``TestCaseRun`` to ``TestExecution`` including renaming existing
+  permissions
+- Rename ``TestCaseRunStatus`` to ``TestExecutionStatus``
+
+
+API
+~~~
+
+- Rename ``TestCaseRun.*`` to ``TestExecution.*``
+- Rename ``TestCaseRunStatus.*`` to ``TestExecution.*``
+- This version keeps the old names for backwards compatibility reasons but they
+  will be removed in
+  `Issue #889 <https://github.com/kiwitcms/Kiwi/issues/889>`_
+
+
+Bug fixes
+~~~~~~~~~
+
+- Prompt user before deleting attachments. Fixes
+  `Issue #867 <https://github.com/kiwitcms/Kiwi/issues/867>`_ (Martin Jordanov)
+- ``email_case_deletion()`` format error fixed so notifications when
+  test cases are deleted are not sent (Rik)
+
+
+Refactoring
+~~~~~~~~~~~
+
+- Remove unused images
+- Install ``node_modules/`` under ``tcms/`` and include it inside PyPI tarball
+
+
+Translations
+~~~~~~~~~~~~
+
+- Updated `Slovenian translation <https://crowdin.com/project/kiwitcms/sl#>`_
+
+
+
+Kiwi TCMS 6.6 (19 Mar 2019)
+---------------------------
+
+**IMPORTANT:** this is a medium severity security update, improvement and
+bug-fix update. Supported upgrade paths::
+
+    5.3   (or older) -> 5.3.1
+    5.3.1 (or newer) -> 6.0.1
+    6.0.1            -> 6.1
+    6.1              -> 6.1.1
+    6.1.1            -> 6.2 (or newer)
+
+After upgrade don't forget to::
+
+    ./manage.py migrate
+
+
+Security
+~~~~~~~~
+
+- Explicitly require marked v0.6.1 to fix medium severity ReDoS vulnerability. See
+  `SNYK-JS-MARKED-73637 <https://snyk.io/vuln/SNYK-JS-MARKED-73637>`_
+
+
+Improvements
+~~~~~~~~~~~~
+
+- Update ``python-gitlab`` from 1.7.0 to 1.8.0
+- Update ``django-contrib-comments`` from 1.9.0 to 1.9.1
+- More strings marked as translatable (Christophe CHAUVET)
+- When creating new TestCase you can now change notification settings.
+  Previously this was only possible during editing
+- Document import-export approaches. Closes
+  `Issue #795 <https://github.com/kiwitcms/Kiwi/issues/795>`_
+- Document available test automation plugins
+- Improve documentation around Docker customization and SSL termination
+- Add documentation example of reverse rroxy configuration for HAProxy (Nicolas Auvray)
+- ``TestPlan.add_case()`` will now set the sortkey to highest in plan + 10 (Rik)
+- Add ``LinkOnly`` issue tracker. Fixes
+  `Issue #289 <https://github.com/kiwitcms/Kiwi/issues/289>`_
+- Use the same HTML template for both TestCase new & edit
+- New API methods for adding, removing and listing attachments. Fixes
+  `Issue #446 <https://github.com/kiwitcms/Kiwi/issues/446>`_:
+
+  - TestPlan.add_attachment()
+  - TestCase.add_attachment()
+  - TestPlan.list_attachments()
+  - TestCase.list_attachments()
+  - Attachments.remove_attachment()
+
+
+Database migrations
+~~~~~~~~~~~~~~~~~~~
+
+- Populate missing ``TestCase.text`` history.
+  In version 6.5 the ``TestCase`` model was updated to store the text
+  into a single field called ``text`` instead of 4 separate fields.
+  During that migration historical records were updated to have
+  the new ``text`` field but values were not properly assigned.
+
+  The "effect" of this is that in TestCaseRun records you were not
+  able to see the actual text b/c it was None.
+
+  This change ammends ``0006_merge_text_field_into_testcase_model`` for
+  installations which have not yet migrated to 6.5 or later. We also
+  provide the data-only migration ``0009_populate_missing_text_history``
+  which will inspect the current state of the DB and copy the text to
+  the last historical record.
+
+
+Removed functionality
+~~~~~~~~~~~~~~~~~~~~~
+
+- Remove legacy reports. Closes
+  `Issue #657 <https://github.com/kiwitcms/Kiwi/issues/657>`_
+- Remove "Save & Continue" functionality from TestCase edit page
+- Renamed API methods:
+
+  - ``TestCaseRun.add_log()``    -> ``TestCaseRun.add_link()``
+  - ``TestCaseRun.remove_log()`` -> ``TestCaseRun.remove_link()``
+  - ``TestCaseRun.get_logs()``   -> ``TestCaseRun.get_links()``
+
+  These methods work with URL links, which can be added or removed to
+  test case runs.
+
+
+Bug fixes
+~~~~~~~~~
+
+- Remove hard-coded timestamp in TestCase page template, References
+  `Issue #765 <https://github.com/kiwitcms/Kiwi/issues/765>`_
+- Fix handling of ``?from_plan`` URL parameter in TestCase page
+- Make ``TestCase.text`` occupy 100% width when rendered. Fixes
+  `Issue #798 <https://github.com/kiwitcms/Kiwi/issues/798>`_
+- Enable ``markdown.extensions.tables``. Fixes
+  `Issue #816 <https://github.com/kiwitcms/Kiwi/issues/816>`_
+- Handle form erros and default values for TestPlan new/edit. Fixes
+  `Issue #864 <https://github.com/kiwitcms/Kiwi/issues/864>`_
+- Tests + fix for failing TestCase rendering in French
+- Show color-coded statuses on dashboard page when seen with non-English
+  language
+- Refactor check for confirmed test cases when editting to work with
+  translations
+- Fix form values when filtering test cases inside TestPlan. Fixes
+  `Issue #674 <https://github.com/kiwitcms/Kiwi/issues/674>`_ (@marion2016)
+- Show delete icon for attachments. Fixes
+  `Issue #847 <https://github.com/kiwitcms/Kiwi/issues/847>`_
+
+
+Refactoring
+~~~~~~~~~~~
+
+- Remove unused ``.current_user`` instance attribute
+- Remove ``EditCaseForm`` and use ``NewCaseForm`` instead, References
+  `Issue #708 <https://github.com/kiwitcms/Kiwi/issues/708>`_,
+  `Issue #812 <https://github.com/kiwitcms/Kiwi/issues/812>`_
+- Fix "Select All" checkbox. Fixes
+  `Issue #828 <https://github.com/kiwitcms/Kiwi/issues/828>`_ (Rady)
+
+
+Translations
+~~~~~~~~~~~~
+
+- Updated `Chinese Simplified translation <https://crowdin.com/project/kiwitcms/zh-CN#>`_
+- Updated `Chinese Traditional translation <https://crowdin.com/project/kiwitcms/zh-TW#>`_
+- Updated `German translation <https://crowdin.com/project/kiwitcms/de#>`_
+- Updated `French translation <https://crowdin.com/project/kiwitcms/fr#>`_
+- Updated `Slovenian translation <https://crowdin.com/project/kiwitcms/sl#>`_
+- Changed misspelled source string ``Requirments`` -> ``Requirements`` (@Prome88)
+
+
+
 tcms-api 5.3 (24 Feb 2019)
 --------------------------
 

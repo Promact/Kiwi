@@ -12,7 +12,7 @@ from factory.django import DjangoModelFactory
 from tcms.management.models import Priority
 from tcms.testcases.models import TestCaseStatus
 from tcms.testcases.models import BugSystem
-from tcms.testruns.models import TestCaseRunStatus
+from tcms.testruns.models import TestExecutionStatus
 
 
 # ### Factories for app management ###
@@ -278,10 +278,10 @@ class TestRunFactory(DjangoModelFactory):
                 TestRunCCFactory(run=self, user=user)
 
 
-class TestCaseRunFactory(DjangoModelFactory):
+class TestExecutionFactory(DjangoModelFactory):
 
     class Meta:
-        model = 'testruns.TestCaseRun'
+        model = 'testruns.TestExecution'
 
     assignee = factory.SubFactory(UserFactory)
     tested_by = factory.SubFactory(UserFactory)
@@ -290,7 +290,7 @@ class TestCaseRunFactory(DjangoModelFactory):
     sortkey = factory.Sequence(lambda n: n)
     run = factory.SubFactory(TestRunFactory)
     case = factory.SubFactory(TestCaseFactory)
-    status = factory.LazyFunction(lambda: TestCaseRunStatus.objects.order_by('pk').first())
+    status = factory.LazyFunction(lambda: TestExecutionStatus.objects.order_by('pk').first())
     build = factory.SubFactory(BuildFactory)
 
 
@@ -305,7 +305,7 @@ class BugFactory(DjangoModelFactory):
     bug_system = factory.LazyFunction(
         lambda: BugSystem.objects.first()  # pylint: disable=unnecessary-lambda
     )
-    case_run = factory.SubFactory(TestCaseRunFactory)
+    case_run = factory.SubFactory(TestExecutionFactory)
     case = factory.SubFactory(TestCaseFactory)
 
 

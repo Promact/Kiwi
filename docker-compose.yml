@@ -20,10 +20,9 @@ services:
         depends_on:
             - db
         restart: always
-        image: kiwitcms/kiwi:latest
+        build: .
         ports:
-            - 80:8080
-            - 443:8443
+            - 8095:8080            
         volumes:
             - uploads:/Kiwi/uploads:Z
         environment:
